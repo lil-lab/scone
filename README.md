@@ -1,5 +1,4 @@
 # scone
-Code coming soon!
 
 ## Data
 All data is available in the `data/` directory, whose subdirectories correspond
