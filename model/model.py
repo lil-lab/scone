@@ -91,7 +91,7 @@ class ConstrainedContextSeq2SeqEmbeddings(SconeModel):
 
         # Output vocabs and embeddings.
         self.output_action_vocabulary = Vocabulary(output_vocabularies[0], [EOS, BEG])
-        self.output_location_vocabulary.g = Vocabulary(output_vocabularies[1], [NO_ARG, BEG])
+        self.output_location_vocabulary = Vocabulary(output_vocabularies[1], [NO_ARG, BEG])
         self.output_argument_vocabulary = Vocabulary(output_vocabularies[2], [NO_ARG, BEG])
 
         # All outputs vocabulary.
@@ -99,7 +99,7 @@ class ConstrainedContextSeq2SeqEmbeddings(SconeModel):
         self._valid_action_indices = []
         index = 0
         for action in self.output_action_vocabulary:
-            for location in self.output_location_vocabulary.g:
+            for location in self.output_location_vocabulary:
                 for argument in self.output_argument_vocabulary:
                     if action != BEG and location != BEG and argument != BEG:
                         if valid_action_fn(action, location, argument):
@@ -113,7 +113,7 @@ class ConstrainedContextSeq2SeqEmbeddings(SconeModel):
              args.embeddings_size),
             name="output-action-embeddings")
         self._output_location_embeddings = self._pc.add_lookup_parameters(
-            (len(self.output_location_vocabulary.g),
+            (len(self.output_location_vocabulary),
              args.embeddings_size),
             name="output-location-embeddings")
         self._output_argument_embeddings = self._pc.add_lookup_parameters(
@@ -159,7 +159,7 @@ class ConstrainedContextSeq2SeqEmbeddings(SconeModel):
             (len(self.output_action_vocabulary) - 1, args.decoder_size),
             name="output-w-action")
         self._output_w_location = self._pc.add_parameters(
-            (len(self.output_location_vocabulary.g) - 1, args.decoder_size),
+            (len(self.output_location_vocabulary) - 1, args.decoder_size),
             name="output-w-location")
         self._output_w_argument = self._pc.add_parameters(
             (len(self.output_argument_vocabulary) - 1, args.decoder_size),
@@ -186,7 +186,7 @@ class ConstrainedContextSeq2SeqEmbeddings(SconeModel):
             dy.Expression representing the entropy.
         """
         num_actions = len(self.output_action_vocabulary) - 1
-        num_locations = len(self.output_location_vocabulary.g) - 1
+        num_locations = len(self.output_location_vocabulary) - 1
         num_arguments = len(self.output_argument_vocabulary) - 1
         valid_mask = numpy.zeros(num_actions * num_locations * num_arguments)
         for index in self._valid_action_indices:
@@ -215,7 +215,7 @@ class ConstrainedContextSeq2SeqEmbeddings(SconeModel):
 
     def action_probabilities(self, distribution):
         num_actions = len(self.output_action_vocabulary) - 1
-        num_locations = len(self.output_location_vocabulary.g) - 1
+        num_locations = len(self.output_location_vocabulary) - 1
         num_arguments = len(self.output_argument_vocabulary) - 1
         zeroes = numpy.zeros(num_locations * num_arguments)
         ones = numpy.ones(num_locations * num_arguments)
@@ -259,7 +259,7 @@ class ConstrainedContextSeq2SeqEmbeddings(SconeModel):
                     assert len(current_triple) == 3
                     seq.append(current_triple)
                 current_triple = [token]
-            elif token in self.output_location_vocabulary.g:
+            elif token in self.output_location_vocabulary:
                 assert len(current_triple) == 1, \
                     "Location " + str(token) + " must follow an action," \
                     + " but current triple was " + str(current_triple)
@@ -284,7 +284,7 @@ class ConstrainedContextSeq2SeqEmbeddings(SconeModel):
             string = list(string)
 
         return [(self.output_action_vocabulary.lookup_index(tok[0]),
-                 self.output_location_vocabulary.g.lookup_index(tok[1]),
+                 self.output_location_vocabulary.lookup_index(tok[1]),
                  self.output_argument_vocabulary.lookup_index(tok[2])) \
                     for tok in self.group_tokens(string)]
 
@@ -442,7 +442,7 @@ class ConstrainedContextSeq2SeqEmbeddings(SconeModel):
         rnn_state = self._init_decoder()
         losses = []
         prev_token_ints = (self.output_action_vocabulary.lookup_index(BEG),
-                           self.output_location_vocabulary.g.lookup_index(BEG),
+                           self.output_location_vocabulary.lookup_index(BEG),
                            self.output_argument_vocabulary.lookup_index(BEG))
         for i, output_token in enumerate(output_seq):
             if self.args.feed_updated_state:
@@ -477,7 +477,7 @@ class ConstrainedContextSeq2SeqEmbeddings(SconeModel):
             losses.append(-log_prob_token)
 
             prev_token_ints = (self.output_action_vocabulary.lookup_index(output_token[0]),
-                               self.output_location_vocabulary.g.lookup_index(output_token[1]),
+                               self.output_location_vocabulary.lookup_index(output_token[1]),
                                self.output_argument_vocabulary.lookup_index(output_token[2]))
 
         return losses
@@ -521,7 +521,7 @@ class ConstrainedContextSeq2SeqEmbeddings(SconeModel):
                             prob_dist):
         # TODO: this is specific to Alchemy
         num_actions = len(self.output_action_vocabulary) - 1
-        num_locations = len(self.output_location_vocabulary.g) - 1
+        num_locations = len(self.output_location_vocabulary) - 1
         num_arguments = len(self.output_argument_vocabulary) - 1
         new_probdist = dy.zeros(prob_dist.dim()[0])
         zeroes = numpy.zeros(num_locations * num_arguments)
@@ -597,7 +597,7 @@ class ConstrainedContextSeq2SeqEmbeddings(SconeModel):
                 (initial_state,
                  self._init_decoder(),
                  (self.output_action_vocabulary.lookup_index(BEG),
-                  self.output_location_vocabulary.g.lookup_index(BEG),
+                  self.output_location_vocabulary.lookup_index(BEG),
                   self.output_argument_vocabulary.lookup_index(BEG))))
 
         for _ in range(length):
@@ -664,7 +664,7 @@ class ConstrainedContextSeq2SeqEmbeddings(SconeModel):
                         else:
                             predicted_token_idxs = \
                                 (self.output_action_vocabulary.lookup_index(predicted_token[0]),
-                                 self.output_location_vocabulary.g.lookup_index(predicted_token[1]),
+                                 self.output_location_vocabulary.lookup_index(predicted_token[1]),
                                  self.output_argument_vocabulary.lookup_index(predicted_token[2]))
                             new_states.append(
                                 (fsa, rnn_state, predicted_token_idxs))
@@ -707,7 +707,7 @@ class ConstrainedContextSeq2SeqEmbeddings(SconeModel):
         output_seq_probs = []
         attentions = []
         predicted_token_ints = [self.output_action_vocabulary.lookup_index(BEG),
-                                self.output_location_vocabulary.g.lookup_index(BEG),
+                                self.output_location_vocabulary.lookup_index(BEG),
                                 self.output_argument_vocabulary.lookup_index(BEG)]
         while len(output_seq_probs) <= LEN_LIMIT:
             # Compute the decoder input.
@@ -730,7 +730,7 @@ class ConstrainedContextSeq2SeqEmbeddings(SconeModel):
             output_seq_probs.append((predicted_token, prob))
             predicted_token_ints = \
                 [self.output_action_vocabulary.lookup_index(predicted_token[0]),
-                 self.output_location_vocabulary.g.lookup_index(predicted_token[1]),
+                 self.output_location_vocabulary.lookup_index(predicted_token[1]),
                  self.output_argument_vocabulary.lookup_index(predicted_token[2])]
             if predicted_token == (EOS, NO_ARG, NO_ARG):
                 return output_seq_probs, attentions

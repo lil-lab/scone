@@ -14,7 +14,6 @@ import random
 
 from data import prepare_data, chunks
 from evaluation import get_set_loss, utterance_accuracy, interaction_accuracy
-from pycrayon import CrayonClient
 from util import shaping
 from model_util import readable_action
 from vocabulary import EOS, NO_ARG, BEG, ACTION_SEP
@@ -523,8 +522,8 @@ def reinforcement_learning(model,
                            val_interactions,
                            log_dir,
                            fsa_builder,
-                           reward_function,
-                           entropy_fn,
+                           reward_fn,
+                           entropy_function,
                            args,
                            batch_size=1,
                            epochs=20,
@@ -549,8 +548,13 @@ def reinforcement_learning(model,
     best_val_reward = -float('inf')
     best_model = None
 
-    crayon = CrayonClient(hostname="localhost")
-    experiment = crayon.create_experiment(log_dir)
+    try:
+        from pycrayon import CrayonClient
+        crayon = CrayonClient(hostname="localhost")
+        experiment = crayon.create_experiment(log_dir)
+    except ValueError or ImportError:
+        print("If you want to use Crayon, please use `pip install pycrayon` to install it. ")
+        experiment = None
 
     num_batches = 0
     train_file = open(os.path.join(log_dir, "train.log"), "w")
@@ -593,7 +597,7 @@ def reinforcement_learning(model,
 
             train_file.write("--- NEW BATCH # " + str(num_batches) + " ---\n")
             action_probabilities = {}
-            for action in model._output_action_vocabulary:
+            for action in model.output_action_vocabulary:
                 if action != BEG:
                     action_probabilities[action] = []
 
@@ -719,12 +723,13 @@ def reinforcement_learning(model,
                     train_file,
                     experiment,
                     num_batches)
-        experiment.to_zip(
-            os.path.join(
-                log_dir,
-                "crayon-" +
-                str(epoch) +
-                ".zip"))
+        if experiment is not None:
+            experiment.to_zip(
+                os.path.join(
+                    log_dir,
+                    "crayon-" +
+                    str(epoch) +
+                    ".zip"))
         model_file_name = log_dir + "/model-rl-epoch" + str(epoch) + ".dy"
         model.save_params(model_file_name)
         if val_int_acc > best_val_accuracy or best_model is None:
