@@ -704,7 +704,7 @@ def reinforcement_learning(model,
             fsa_builder=fsa_builder,
             logfile=log_dir + "/rl-val-" + str(epoch) + ".log",
             args=args,
-            reward_fn=reward_fn)
+            reward_function=reward_fn)
 
         val_int_acc = interaction_accuracy(
             model,
