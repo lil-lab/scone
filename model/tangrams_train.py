@@ -19,10 +19,10 @@ from tangrams_fsa import TangramsFSA, NUM_POSITIONS, SHAPES
 from tangrams_state import TangramsState
 from tangrams_state_encoder import TangramsStateEncoder
 from evaluation import utterance_accuracy, interaction_accuracy, attention_analysis
-from constrained_model import ConstrainedContextSeq2SeqEmbeddings
+from model import ConstrainedContextSeq2SeqEmbeddings
 from reinforcement_learning import reinforcement_learning, reward_with_shaping
 from supervised_learning import train_and_evaluate
-from train import interpret_args
+from args import interpret_args
 from vocabulary import EOS, NO_ARG
 from util import shaping
 

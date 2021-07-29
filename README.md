@@ -26,4 +26,7 @@ See `model/`. There are a few necessary steps to start running the code.
 * Crayon (see [install guide](https://github.com/clab/dynet/tree/master/examples/tensorboard) for use with DyNet)
 * Docker
 
-If you don't want to use Crayon for logging, you can disable it in the code.
+You could install the requirements simply by
+```shell
+pip install -r requirements.txt
+```

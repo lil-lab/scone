@@ -4,7 +4,7 @@ import random
 import os
 from itertools import groupby
 from enum import Enum
-from train import interpret_args
+from args import interpret_args
 
 import dynet_config
 dynet_config.set(mem=2048,
@@ -13,7 +13,7 @@ dynet_config.set(mem=2048,
 import dynet as dy
 from data import load_data
 from scene_state import SceneState
-from constrained_model import ConstrainedContextSeq2SeqEmbeddings
+from model import ConstrainedContextSeq2SeqEmbeddings
 from scene_fsa import COLORS, NUM_POSITIONS, SceneFSA
 from scene_state_encoder import ContextDepStateEncoder
 from supervised_learning import train_and_evaluate

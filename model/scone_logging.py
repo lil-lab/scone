@@ -16,4 +16,5 @@ def log_metrics(metrics_dict, fileptr=None, experiment=None, index=0):
 
     for name, value in metrics_dict.items():
         fileptr.write(name + ":\t" + str(value) + "\n")
-        experiment.add_scalar_value(name, value, step=index)
+        if experiment is not None:
+            experiment.add_scalar_value(name, value, step=index)
